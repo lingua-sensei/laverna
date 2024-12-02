@@ -14,74 +14,69 @@ import (
 	"strings"
 )
 
-type SynthesizeOptions struct {
-	Slow  bool   `json:"slow"`
-	Text  string `json:"text"`
-	Voice string `json:"voice"`
+type Speed int
+
+const (
+	Normal Speed = iota
+	Slower
+	Slowest
+)
+
+type SynthesizeOpts struct {
+	Speed Speed
+	Text  string
+	Voice string
 }
 
-func createRequestBody(opts SynthesizeOptions) string {
-	values := []any{opts.Text, opts.Voice, opts.Slow, "null"}
-	valuesJSON, _ := json.Marshal(values)
+func makeFormData(opts SynthesizeOpts) string {
+	values := []any{opts.Text, opts.Voice, nil, nil, []Speed{opts.Speed}}
+	rawValues, _ := json.Marshal(values)
 
 	data := [][][]any{
 		{
-			{"jQ1olc", string(valuesJSON), nil, "generic"},
+			{"jQ1olc", string(rawValues), nil, "generic"},
 		},
 	}
-	dataJSON, _ := json.Marshal(data)
+	rawData, _ := json.Marshal(data)
 
-	params := url.Values{}
-	params.Set("f.req", string(dataJSON))
-	params.Set("rpcids", "jQ1olc")
-	params.Set("source-path", "/")
-	params.Set("bl", "boq_translate-webserver_20241113.05_p0")
-	params.Set("hl", "en")
-	params.Set("soc-app", "1")
-	params.Set("soc-platform", "1")
-	params.Set("soc-device", "2")
-	params.Set("_reqid", "2651428")
-	params.Set("rt", "c")
-
-	return params.Encode()
+	formValues := url.Values{}
+	formValues.Set("f.req", string(rawData))
+	return formValues.Encode()
 }
 
-func Synthesize(opts SynthesizeOptions) ([]byte, error) {
+const hostname = "https://translate.google.com"
+
+func Synthesize(opts SynthesizeOpts) ([]byte, error) {
 	client := &http.Client{}
-
-	body := createRequestBody(opts)
-
+	formData := makeFormData(opts)
 	req, err := http.NewRequest("POST",
-		"https://translate.google.com/_/TranslateWebserverUi/data/batchexecute",
-		bytes.NewBufferString(body))
+		hostname+"/_/TranslateWebserverUi/data/batchexecute",
+		bytes.NewBufferString(formData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "*/*")
-	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Origin", "https://translate.google.com")
-	req.Header.Set("Referer", "https://translate.google.com/")
-
+	req.Header.Set("Origin", hostname)
+	req.Header.Set("Referer", hostname)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(resp.Body)
+	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %v", err)
 	}
 
-	log.Printf("[INFO] Response: %v", string(responseBody))
+	log.Printf("[INFO] Response: %v", string(raw))
 
-	return parseResponse(responseBody)
+	return makeAudioBuffer(raw)
 }
 
-func parseResponse(responseBody []byte) ([]byte, error) {
+func makeAudioBuffer(responseBody []byte) ([]byte, error) {
 	responseStr := string(responseBody)
 	lines := strings.Split(responseStr, "\n")
 
@@ -139,10 +134,10 @@ func parseResponse(responseBody []byte) ([]byte, error) {
 }
 
 func main() {
-	opts := SynthesizeOptions{
-		Slow:  false,
-		Text:  "สวัสดีโลก",
+	opts := SynthesizeOpts{
+		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
 		Voice: "th",
+		Speed: Slowest,
 	}
 
 	audioData, err := Synthesize(opts)
@@ -151,10 +146,10 @@ func main() {
 		return
 	}
 
-	const filename = "hello_world_th.mp3"
+	const filename = "hello_world_thai_slowest.mp3"
 	if err := os.WriteFile(filename, audioData, 0644); err != nil {
 		log.Printf("[ERR] os.WriteFile(%v): %v\n", audioData, err)
 		return
 	}
-	log.Printf("Successfully saved Thai audio to %v\n", filename)
+	log.Printf("Successfully saved audio to %v\n", filename)
 }
