@@ -14,8 +14,8 @@ import (
 func main() {
 	opts := synthesize.Opts{
 		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
-		Voice: synthesize.Thai,
-		Speed: synthesize.Slowest,
+		Voice: synthesize.ThaiVoice,
+		Speed: synthesize.NormalSpeed,
 	}
 
 	audio, err := synthesize.Run(opts)

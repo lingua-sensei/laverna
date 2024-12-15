@@ -7,8 +7,8 @@ import (
 func TestRun(t *testing.T) {
 	opts := Opts{
 		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
-		Voice: Thai,
-		Speed: Slowest,
+		Voice: ThaiVoice,
+		Speed: SlowestSpeed,
 	}
 
 	audio, err := Run(opts)

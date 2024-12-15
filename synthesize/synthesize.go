@@ -17,7 +17,7 @@ type Speed int
 const (
 	NormalSpeed = iota
 	SlowerSpeed
-	Slowest
+	SlowestSpeed
 )
 
 type Opts struct {
