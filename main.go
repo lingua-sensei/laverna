@@ -1,33 +1,76 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"runtime"
+	"sync"
 
 	"github.com/lingua-sensei/laverna/synthesize"
 )
 
-// New feature, make a CLI that accepts 1 opt or multiple opts via YAML file
-// when 1 opt is used via CLI, text should be the filename
-// when YAML file used, go with sequential ID name generation but there should be a default start number settable on YAML
+var (
+	filenamePath     = flag.String("file", "", "filename path that is used for reading YAML file")
+	maxWorkers       = flag.Int("workers", runtime.GOMAXPROCS(0), "maximum number of concurrent downloads")
+	generationNumber = flag.Int("n", 1, "generation number that is used in output filenames")
+)
 
 func main() {
-	opts := synthesize.Opts{
-		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
-		Voice: synthesize.ThaiVoice,
-		Speed: synthesize.NormalSpeed,
+	flag.Parse()
+	if *filenamePath == "" {
+		flag.Usage()
+		os.Exit(0)
 	}
 
-	audio, err := synthesize.Run(opts)
+	raw, err := os.ReadFile(*filenamePath)
 	if err != nil {
-		log.Printf("[ERR] Synthesize(%v): %v\n", opts, err)
-		return
+		log.Fatalf("[ERR] failed to read filename path: %v", err)
 	}
 
-	const filename = "hello_world_thai_slowest.mp3"
-	if err := os.WriteFile(filename, audio, 0644); err != nil {
-		log.Printf("[ERR] os.WriteFile(%v): %v\n", audio, err)
-		return
+	opts, err := synthesize.UnmarshalYAML(raw)
+	if err != nil {
+		log.Fatalf("[ERR] failed to unmarshal YAML: %v", err)
 	}
-	log.Printf("[INFO] Successfully saved audio to %v\n", filename)
+
+	c := &http.Client{}
+	for err := range batchSave(c, *maxWorkers, *generationNumber, opts) {
+		log.Printf("[WARN] failed to batch save: %v", err)
+	}
+}
+
+func batchSave(client *http.Client, workerCount, generationNumber int, opts []synthesize.Opt) <-chan error {
+	errChan := make(chan error, len(opts))
+	throttle := make(chan struct{}, workerCount)
+	var wg sync.WaitGroup
+
+	for i := range opts {
+		wg.Add(1)
+		go func(generationNumber int) {
+			defer wg.Done()
+			throttle <- struct{}{}
+			defer func() {
+				<-throttle
+			}()
+
+			audio, err := synthesize.Run(client, opts[i])
+			if err != nil {
+				errChan <- fmt.Errorf("failed to run opt(%s): %w", opts[i].Text, err)
+				return
+			}
+
+			filename := fmt.Sprintf("audio_%d.mp3", generationNumber)
+			if err := os.WriteFile(filename, audio, 0644); err != nil {
+				errChan <- fmt.Errorf("failed to write file(%s): %w", filename, err)
+			}
+		}(generationNumber + i)
+	}
+
+	go func() {
+		wg.Wait()
+		close(errChan)
+	}()
+	return errChan
 }
