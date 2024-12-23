@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"net/url"
@@ -20,11 +21,45 @@ const (
 	SlowestSpeed
 )
 
-type Opts struct {
-	Speed  Speed
-	Voice  Voice
-	Text   string
-	Client http.Client
+type Opt struct {
+	Speed Speed
+	Voice Voice
+	Text  string
+}
+
+var ErrEmptyYAML = errors.New("empty yaml")
+
+// UnmarshalYAML reads raw bytes from YAML and turns into Opts
+func UnmarshalYAML(raw []byte) ([]Opt, error) {
+	if len(raw) == 0 {
+		return nil, ErrEmptyYAML
+	}
+
+	type YAML struct {
+		Speed string `yaml:"speed"`
+		Voice string `yaml:"voice"`
+		Text  string `yaml:"text"`
+	}
+	var in []YAML
+	if err := yaml.Unmarshal(raw, &in); err != nil {
+		return nil, fmt.Errorf("yaml.Unmarshal(): %w", err)
+	}
+
+	opts := make([]Opt, len(in))
+	for i, v := range in {
+		switch strings.ToLower(v.Speed) {
+		case "normal":
+			opts[i].Speed = NormalSpeed
+		case "slower":
+			opts[i].Speed = SlowerSpeed
+		case "slowest":
+
+			opts[i].Speed = SlowestSpeed
+		}
+		opts[i].Voice = Voice(strings.ToLower(v.Voice))
+		opts[i].Text = v.Text
+	}
+	return opts, nil
 }
 
 // Request will look as below, since it is a form, the key is f.req
@@ -47,7 +82,7 @@ type Opts struct {
 		]
 	]
 */
-func makeFormData(opts Opts) (string, error) {
+func makeFormData(opts Opt) (string, error) {
 	genericOpts := []any{opts.Text, opts.Voice, nil, nil, []Speed{opts.Speed}}
 	rawOpts, err := json.Marshal(genericOpts)
 	if err != nil {
@@ -137,19 +172,22 @@ const hostname = "https://translate.google.com"
 
 var ErrTextTooLong = errors.New("text must be less than 200 chars")
 
-func Run(opts Opts) ([]byte, error) {
-	const url = hostname + "/_/TranslateWebserverUi/data/batchexecute"
+func Run(c *http.Client, opt Opt) ([]byte, error) {
+	const URL = hostname + "/_/TranslateWebserverUi/data/batchexecute"
 
-	if len(opts.Text) > 200 {
+	if len(opt.Text) > 200 {
 		return nil, ErrTextTooLong
 	}
-
-	formData, err := makeFormData(opts)
-	if err != nil {
-		return nil, fmt.Errorf("makeFormData(%v): %v", opts, err)
+	if c == nil {
+		c = http.DefaultClient
 	}
 
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBufferString(formData))
+	formData, err := makeFormData(opt)
+	if err != nil {
+		return nil, fmt.Errorf("makeFormData(%v): %v", opt, err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, URL, bytes.NewBufferString(formData))
 	if err != nil {
 		return nil, fmt.Errorf("http.NewRequest(): %v", err)
 	}
@@ -158,9 +196,9 @@ func Run(opts Opts) ([]byte, error) {
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("Origin", hostname)
 	req.Header.Set("Referer", hostname)
-	resp, err := opts.Client.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%T.Do(): %v", opts.Client, err)
+		return nil, fmt.Errorf("%T.Do(): %v", c, err)
 	}
 	defer resp.Body.Close()
 
