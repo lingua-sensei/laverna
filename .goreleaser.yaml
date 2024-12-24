@@ -1,4 +1,7 @@
-project_name: Laverna
+version: 2
+
+env:
+  - GO111MODULE=on
 
 builds:
   - env:
@@ -17,16 +20,6 @@ builds:
 checksum:
   name_template: "{{ .ProjectName }}-{{ .Version }}-checksums.sha256"
 
-nfpms:
-  - maintainer: F. Talha Altinel <talhaaltinel@hotmail.com>
-    description: CLI for language learners
-    homepage: https://github.com/lingua-sensei/laverna
-    license: MIT
-    formats:
-      - deb
-      - rpm
-      - apk
-
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format_overrides:
@@ -42,3 +35,5 @@ changelog:
       - "^chore:"
       - "Merge pull request"
       - "Merge branch"
+      - "Merge remote-tracking branch"
+      - "go mod tidy"
