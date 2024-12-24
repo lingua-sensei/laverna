@@ -2,28 +2,7 @@
 
 the goddess of the thieves, helps you steal translation speeches from the G-daddy monopoly.
 
-```
-        w*W*W*W*w
-         \"."."/
-          //`\\
-         (/o o\)
-         (\_-_/) 
-        .-~'='~-.
-       /`~`"Y"`~`\
-      / /(_ * _)\ \       
-     / /  )   (  \ \
-     \ \_/\\_//\_/ / 
-      \/_) '*' (_\/
-        |   L   |
-        |   a   |
-        |   v   |
-        |   e   |
-        |   r   |
-        |   n   |
-        |   a   |
-        |       |
-        w*W*W*W*w
-```
+<img src="https://github.com/user-attachments/assets/d1d344c9-f36b-4cf7-af70-f162f93ea9f0" width="400" alt="squash-goose">
 
 ### Install Via Go
 
@@ -54,7 +33,7 @@ Let's create example YAML.
 Running below command will generate audios in the same directory.
 
 ```shell
-go run main.go -file example.yaml 
+laverna -file example.yaml 
 ```
 
 
