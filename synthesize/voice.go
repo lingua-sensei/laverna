@@ -5,6 +5,8 @@ package synthesize
 // Need to be compared and tested against https://github.com/florabtw/google-translate-tts/blob/master/src/voices.js
 type Voice string
 
+//nolint:revive
+//nolint:nolintlint
 const (
 	AbkhazVoice             Voice = "ab"
 	AcehneseVoice           Voice = "ace"
