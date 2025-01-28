@@ -7,7 +7,7 @@ the goddess of the thieves, helps you steal translation speeches from the G-dadd
 ### Install Via Go
 
 ```shell
-go install github.com/lingua-sensei/laverna@latest
+  go install github.com/lingua-sensei/laverna@latest
 ```
 
 ### Grab Binaries
@@ -33,9 +33,5 @@ Let's create example YAML.
 Running below command will generate audios in the same directory.
 
 ```shell
-laverna -file example.yaml 
+  laverna -file example.yaml 
 ```
-
-
-> [!IMPORTANT]  
-> There seems to be heavy obfuscatication over 200 characters, I am working on an algo that to crack that.

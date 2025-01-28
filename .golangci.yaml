@@ -1,0 +1,111 @@
+# If this config is confusing, have a look here, it is documented from A-Z https://golangci-lint.run/usage/linters
+linters-settings:
+  revive:
+    max-open-files: 2048 # Maximum number of open files at the same time.
+    ignore-generated-header: false # When set to false, ignores files with "GENERATED" header, similar to golint.
+    severity: warning # Sets the default severity.
+    enable-all-rules: false # Enable all available rules.
+    confidence: 0.8 # This means that linting errors with less than 0.8 confidence will be ignored.
+    rules:
+      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#exported
+      - name: exported
+        severity: warning
+        disabled: false
+        arguments:
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"
+  interfacebloat:
+    max: 5 # The maximum number of methods allowed for an interface.
+  goconst:
+    min-len: 3 # Minimal length of string constant.
+    min-occurrences: 3 # Minimum occurrences of constant string count to trigger issue.
+    ignore-tests: true
+  gci:
+    custom-order: true
+    sections:
+      - standard # Standard section: captures all standard packages.
+      - default # Default section: contains all imports that could not be matched to another section type.
+      - prefix(github.com/mrwormhole/laverna) # Custom section: groups all imports with the specified Prefix.
+    skip-generated: false
+  nolintlint:
+    allow-unused: false # report any unused nolint directives
+    require-explanation: false # don't require an explanation for nolint directives
+    require-specific: true # require nolint directives to be specific about which linter is being skipped
+  godox:
+    # Report any comments starting with keywords
+    keywords:
+      - TODO
+      - BUG
+      - FIXME
+      - OPTIMIZE
+      - HACK
+  usetesting:
+    # Enable/disable `os.CreateTemp("", ...)` `os.MkdirTemp()` `os.Setenv()` `os.TempDir()` detections.
+    os-create-temp: true
+    os-mkdir-temp: true
+    os-setenv: true
+    os-temp-dir: true
+
+linters:
+  disable-all: true
+  enable:
+    # common mistakes
+    - govet
+    - staticcheck
+    - gosec
+    - bodyclose
+    - ineffassign
+    - errcheck
+    - durationcheck
+    - nilerr
+    - nilnil
+    - nolintlint
+    - wrapcheck
+    - sloglint
+    - interfacebloat
+    - asasalint
+    - gochecknoinits
+    - godox
+    - musttag
+    - nosprintfhostport
+    - recvcheck
+
+    # common styling
+    - gofmt
+    - goimports
+    - gci
+    - goconst
+    - gosimple
+    - dogsled
+    - errname
+    - forcetypeassert
+    - predeclared
+    - usetesting
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - whitespace
+    - stylecheck
+    # - revive
+
+    # context issues
+    - containedctx
+    - contextcheck
+    - fatcontext
+    - noctx
+
+issues:
+  # Disable golangci-lint defaults https://golangci-lint.run/usage/false-positives/
+  exclude-use-default: false
+
+  exclude-rules:
+    - path: _test\.go$
+      linters:
+        - containedctx
+
+run:
+  tests: true
+  timeout: 30s

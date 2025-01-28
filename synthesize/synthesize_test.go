@@ -1,28 +1,60 @@
 package synthesize
 
 import (
+	"context"
 	"errors"
-	"github.com/google/go-cmp/cmp"
-	"github.com/mrwormhole/errdiff"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/mrwormhole/errdiff"
 )
 
-func TestRun(t *testing.T) {
-	c := &http.Client{}
-	opts := Opt{
-		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
-		Voice: ThaiVoice,
-		Speed: SlowestSpeed,
+func TestRun2(t *testing.T) {
+	tests := []struct {
+		name      string
+		client    *http.Client
+		opt       Opt
+		wantErr   error
+		wantBytes int
+	}{
+		{
+			name:   "normal case",
+			client: &http.Client{},
+			opt: Opt{
+				Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
+				Voice: ThaiVoice,
+				Speed: SlowestSpeed,
+			},
+			wantErr:   nil,
+			wantBytes: 66240,
+		},
+		{
+			name:   "text too long",
+			client: nil,
+			opt: Opt{
+				Text:  strings.Repeat("สวัสดีชาวโลก", 200),
+				Voice: ThaiVoice,
+				Speed: SlowestSpeed,
+			},
+			wantErr:   ErrTextTooLong,
+			wantBytes: 0,
+		},
 	}
 
-	audio, err := Run(c, opts)
-	if err != nil {
-		t.Fatalf("Synthesize(%v): %v", opts, err)
-	}
-	if len(audio) == 0 {
-		t.Error("audio must not be empty")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			audio, err := Run(ctx, tt.client, tt.opt)
+			if diff := errdiff.Check(err, tt.wantErr); diff != "" {
+				t.Errorf("Run(%v): err diff=\n%s", tt.opt, diff)
+			}
+			if !cmp.Equal(tt.wantBytes, len(audio)) {
+				t.Errorf("Run(%v): want bytes(%d) not equal to got bytes(%d)", tt.opt, tt.wantBytes, len(audio))
+			}
+		})
 	}
 }
 
