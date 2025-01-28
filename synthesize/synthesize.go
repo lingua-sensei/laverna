@@ -1,32 +1,41 @@
+// Package synthesize implements an algorithm for synthesizing text to audio.
 package synthesize
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
+// Speed is the pronunciation speed of the voice
 type Speed int
 
 const (
+	// NormalSpeed is the fastest speed
 	NormalSpeed = iota
+	// SlowerSpeed is the middle speed
 	SlowerSpeed
+	// SlowestSpeed is the slowest speed
 	SlowestSpeed
 )
 
+// Opt is a list of parameters for generating audio
 type Opt struct {
 	Speed Speed
 	Voice Voice
 	Text  string
 }
 
+// ErrEmptyYAML occurs when empty yaml is given
 var ErrEmptyYAML = errors.New("empty yaml")
 
 // UnmarshalYAML reads raw bytes from YAML and turns into Opts
@@ -170,9 +179,11 @@ func parseAudio(raw []byte) ([]byte, error) {
 
 const hostname = "https://translate.google.com"
 
+// ErrTextTooLong occurs when given text is longer than 200 characters
 var ErrTextTooLong = errors.New("text must be less than 200 chars")
 
-func Run(c *http.Client, opt Opt) ([]byte, error) {
+// Run produces the audio with a http client and a given option
+func Run(ctx context.Context, c *http.Client, opt Opt) (_ []byte, err error) {
 	const URL = hostname + "/_/TranslateWebserverUi/data/batchexecute"
 
 	if len(opt.Text) > 200 {
@@ -187,7 +198,7 @@ func Run(c *http.Client, opt Opt) ([]byte, error) {
 		return nil, fmt.Errorf("makeFormData(%v): %v", opt, err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, URL, bytes.NewBufferString(formData))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, URL, bytes.NewBufferString(formData))
 	if err != nil {
 		return nil, fmt.Errorf("http.NewRequest(): %v", err)
 	}
@@ -200,7 +211,12 @@ func Run(c *http.Client, opt Opt) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%T.Do(): %v", c, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		closeErr := resp.Body.Close()
+		if err == nil && closeErr != nil {
+			err = fmt.Errorf("resp.Body.Close(): %v", closeErr)
+		}
+	}()
 
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {

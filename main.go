@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -45,6 +46,7 @@ func batchSave(client *http.Client, workerCount, generationNumber int, opts []sy
 	errChan := make(chan error, len(opts))
 	throttle := make(chan struct{}, workerCount)
 	var wg sync.WaitGroup
+	ctx := context.Background()
 
 	for i := range opts {
 		wg.Add(1)
@@ -55,14 +57,14 @@ func batchSave(client *http.Client, workerCount, generationNumber int, opts []sy
 				<-throttle
 			}()
 
-			audio, err := synthesize.Run(client, opts[i])
+			audio, err := synthesize.Run(ctx, client, opts[i])
 			if err != nil {
 				errChan <- fmt.Errorf("failed to run opt(%s): %w", opts[i].Text, err)
 				return
 			}
 
 			filename := fmt.Sprintf("audio_%d.mp3", generationNumber)
-			if err := os.WriteFile(filename, audio, 0644); err != nil {
+			if err := os.WriteFile(filename, audio, 0600); err != nil {
 				errChan <- fmt.Errorf("failed to write file(%s): %w", filename, err)
 			}
 		}(generationNumber + i)

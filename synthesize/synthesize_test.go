@@ -1,15 +1,18 @@
 package synthesize
 
 import (
+	"context"
 	"errors"
-	"github.com/google/go-cmp/cmp"
-	"github.com/mrwormhole/errdiff"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/mrwormhole/errdiff"
 )
 
 func TestRun(t *testing.T) {
+	ctx := context.Background()
 	c := &http.Client{}
 	opts := Opt{
 		Text:  "สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก",
@@ -17,7 +20,7 @@ func TestRun(t *testing.T) {
 		Speed: SlowestSpeed,
 	}
 
-	audio, err := Run(c, opts)
+	audio, err := Run(ctx, c, opts)
 	if err != nil {
 		t.Fatalf("Synthesize(%v): %v", opts, err)
 	}
