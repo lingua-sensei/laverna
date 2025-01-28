@@ -101,6 +101,11 @@ issues:
   # Disable golangci-lint defaults https://golangci-lint.run/usage/false-positives/
   exclude-use-default: false
 
+  exclude-rules:
+    - path: _test\.go$
+      linters:
+        - containedctx
+
 run:
   tests: true
   timeout: 30s

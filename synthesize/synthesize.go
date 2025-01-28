@@ -91,8 +91,8 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 		]
 	]
 */
-func makeFormData(opts Opt) (string, error) {
-	genericOpts := []any{opts.Text, opts.Voice, nil, nil, []Speed{opts.Speed}}
+func makeFormData(opt Opt) (string, error) {
+	genericOpts := []any{opt.Text, opt.Voice, nil, nil, []Speed{opt.Speed}}
 	rawOpts, err := json.Marshal(genericOpts)
 	if err != nil {
 		return "", fmt.Errorf("json.Marshal(%v): %v", genericOpts, err)
@@ -200,7 +200,7 @@ func Run(ctx context.Context, c *http.Client, opt Opt) (_ []byte, err error) {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, URL, bytes.NewBufferString(formData))
 	if err != nil {
-		return nil, fmt.Errorf("http.NewRequest(): %v", err)
+		return nil, fmt.Errorf("http.NewRequestWithContext(): %v", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -209,7 +209,7 @@ func Run(ctx context.Context, c *http.Client, opt Opt) (_ []byte, err error) {
 	req.Header.Set("Referer", hostname)
 	resp, err := c.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%T.Do(): %v", c, err)
+		return nil, fmt.Errorf("%T.Do(): %w", c, err)
 	}
 	defer func() {
 		closeErr := resp.Body.Close()
