@@ -18,8 +18,8 @@ type BatchRunner struct {
 }
 
 // NewBatchRunner creates a new BatchRunner with the given options
-func NewBatchRunner(opts ...Option) *BatchRunner {
-	p := &BatchRunner{
+func NewBatchRunner(opts ...BatchRunnerOption) *BatchRunner {
+	r := &BatchRunner{
 		client:     http.DefaultClient,
 		maxWorkers: runtime.GOMAXPROCS(0),
 		saveFn: func(text string, audio []byte) error {
@@ -28,48 +28,48 @@ func NewBatchRunner(opts ...Option) *BatchRunner {
 	}
 
 	for _, opt := range opts {
-		opt(p)
+		opt(r)
 	}
 
-	return p
+	return r
 }
 
-// Option configures a BatchRunner
-type Option func(*BatchRunner)
+// BatchRunnerOption configures a BatchRunner
+type BatchRunnerOption func(*BatchRunner)
 
 // WithClient sets the HTTP client
-func WithClient(c *http.Client) Option {
-	return func(bp *BatchRunner) {
-		bp.client = c
+func WithClient(c *http.Client) BatchRunnerOption {
+	return func(r *BatchRunner) {
+		r.client = c
 	}
 }
 
 // WithMaxWorkers sets the maximum number of concurrent workers
-func WithMaxWorkers(n int) Option {
-	return func(bp *BatchRunner) {
-		bp.maxWorkers = n
+func WithMaxWorkers(n int) BatchRunnerOption {
+	return func(r *BatchRunner) {
+		r.maxWorkers = n
 	}
 }
 
 // WithSaveFunc sets custom save function
-func WithSaveFunc(fn func(string, []byte) error) Option {
-	return func(bp *BatchRunner) {
-		bp.saveFn = fn
+func WithSaveFunc(fn func(string, []byte) error) BatchRunnerOption {
+	return func(r *BatchRunner) {
+		r.saveFn = fn
 	}
 }
 
 // Run runs given opts concurrently and stops if encounters an error
-func (b *BatchRunner) Run(ctx context.Context, opts []Opt) error {
-	p := pool.New().WithContext(ctx).WithMaxGoroutines(b.maxWorkers)
+func (r *BatchRunner) Run(ctx context.Context, opts []Opt) error {
+	p := pool.New().WithContext(ctx).WithMaxGoroutines(r.maxWorkers)
 
 	for _, opt := range opts {
 		p.Go(func(ctx context.Context) error {
-			audio, err := Run(ctx, b.client, opt)
+			audio, err := Run(ctx, r.client, opt)
 			if err != nil {
 				return fmt.Errorf("Run(%v): %w", opt, err)
 			}
 
-			if err := b.saveFn(opt.Text, audio); err != nil {
+			if err := r.saveFn(opt.Text, audio); err != nil {
 				return fmt.Errorf("%T.SaveFunc(%v): %w", p, opt.Text, err)
 			}
 			return nil

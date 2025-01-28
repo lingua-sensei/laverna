@@ -28,7 +28,7 @@ const (
 	SlowestSpeed
 )
 
-// Opt is a list of parameters for generating audio
+// Opt consists of parameters for generating audio
 type Opt struct {
 	Speed Speed
 	Voice Voice
@@ -71,6 +71,8 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 	return opts, nil
 }
 
+const rpcID = "jQ1olc"
+
 // Request will look as below, since it is a form, the key is f.req
 // and the URL encoded value is going to be
 /*
@@ -79,7 +81,7 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 			[
 			"jQ1olc",
 			"[
-				\"สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก\",  // Text
+				\"สวัสดีชาวโลก วันนี้เราจะมาพูดคุยกันถึงปัญหาของโลก\",     // Text
 				\"th\",                                // Voice
 				null,
 				null,
@@ -100,7 +102,7 @@ func makeFormData(opt Opt) (string, error) {
 
 	genericData := [][][]any{
 		{
-			{"jQ1olc", string(rawOpts), nil, "generic"},
+			{rpcID, string(rawOpts), nil, "generic"},
 		},
 	}
 	rawData, err := json.Marshal(genericData)
