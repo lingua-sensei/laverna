@@ -75,11 +75,9 @@ linters:
     - wrapcheck
     - sloglint
     - interfacebloat
-    - asasalint
     - gochecknoinits
     - godox
     - musttag
-    - nosprintfhostport
     - recvcheck
 
     # common styling
