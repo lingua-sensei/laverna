@@ -23,12 +23,31 @@ type Speed int
 
 const (
 	// NormalSpeed is the fastest speed
-	NormalSpeed = iota
+	NormalSpeed Speed = iota
 	// SlowerSpeed is the middle speed
 	SlowerSpeed
 	// SlowestSpeed is the slowest speed
 	SlowestSpeed
 )
+
+// NewSpeed returns the speed
+func NewSpeed(s string) Speed {
+	switch s {
+	case NormalSpeed.String():
+		return NormalSpeed
+	case SlowerSpeed.String():
+		return SlowerSpeed
+	case SlowestSpeed.String():
+		return SlowestSpeed
+	default:
+		return NormalSpeed
+	}
+}
+
+// String returns the string representation of speed
+func (s Speed) String() string {
+	return []string{"normal", "slower", "slowest"}[s]
+}
 
 // Opt consists of parameters for generating audio
 type Opt struct {
@@ -58,15 +77,7 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 
 	opts := make([]Opt, len(in))
 	for i, v := range in {
-		switch strings.ToLower(v.Speed) {
-		case "normal":
-			opts[i].Speed = NormalSpeed
-		case "slower":
-			opts[i].Speed = SlowerSpeed
-		case "slowest":
-
-			opts[i].Speed = SlowestSpeed
-		}
+		opts[i].Speed = NewSpeed(strings.ToLower(v.Speed))
 		opts[i].Voice = Voice(strings.ToLower(v.Voice))
 		opts[i].Text = v.Text
 	}
@@ -109,14 +120,7 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 
 		speed, voice, text := record[0], record[1], record[2]
 		var opt Opt
-		switch strings.ToLower(speed) {
-		case "normal":
-			opt.Speed = NormalSpeed
-		case "slower":
-			opt.Speed = SlowerSpeed
-		case "slowest":
-			opt.Speed = SlowestSpeed
-		}
+		opt.Speed = NewSpeed(strings.ToLower(speed))
 		opt.Voice = Voice(strings.ToLower(voice))
 		opt.Text = text
 		opts = append(opts, opt)
