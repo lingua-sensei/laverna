@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 // Speed is the pronunciation speed of the voice
