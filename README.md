@@ -49,5 +49,11 @@ or you could do YAML
 Running below command will generate audios in the same directory.
 
 ```shell
+  laverna -file example.csv
+```
+
+or
+
+```shell
   laverna -file example.yaml 
 ```
