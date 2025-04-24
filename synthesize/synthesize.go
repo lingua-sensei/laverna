@@ -83,13 +83,10 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 	}
 
 	reader := csv.NewReader(bytes.NewReader(raw))
+	reader.TrimLeadingSpace = true
 	record, err := reader.Read()
 	if err != nil {
 		return nil, fmt.Errorf("%T.Read(): %v", reader, err)
-	}
-
-	for i, r := range record {
-		record[i] = strings.TrimSpace(r)
 	}
 	header := []string{"speed", "voice", "text"}
 	if !slices.Equal(header, record) {
@@ -110,11 +107,7 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 			return nil, fmt.Errorf("record length is not equal to %d", recordLen)
 		}
 
-		for i, r := range record {
-			record[i] = strings.TrimSpace(r)
-		}
 		speed, voice, text := record[0], record[1], record[2]
-
 		var opt Opt
 		switch strings.ToLower(speed) {
 		case "normal":
