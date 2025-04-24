@@ -23,7 +23,16 @@ You can find binaries through GitHub releases.
 
 ### Sample Usage
 
-Let's create example YAML.
+Let's create example CSV
+
+```csv
+speed,voice,text
+normal,th,สวัสดีครับ
+slower,en,Hello there
+slowest,ja,こんにちは~
+```
+
+or you could do YAML
 
 ```yaml
 - speed: normal

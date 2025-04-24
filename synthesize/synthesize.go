@@ -5,12 +5,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -67,6 +69,64 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 		}
 		opts[i].Voice = Voice(strings.ToLower(v.Voice))
 		opts[i].Text = v.Text
+	}
+	return opts, nil
+}
+
+// ErrEmptyCSV occurs when empty csv is given
+var ErrEmptyCSV = errors.New("empty csv")
+
+// UnmarshalCSV reads raw bytes from CSV and turns into Opts
+func UnmarshalCSV(raw []byte) ([]Opt, error) {
+	if len(raw) == 0 {
+		return nil, ErrEmptyCSV
+	}
+
+	reader := csv.NewReader(bytes.NewReader(raw))
+	record, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("%T.Read(): %v", reader, err)
+	}
+
+	for i, r := range record {
+		record[i] = strings.TrimSpace(r)
+	}
+	header := []string{"speed", "voice", "text"}
+	if !slices.Equal(header, record) {
+		return nil, fmt.Errorf("header record(%v) is not the correct header(%v)", record, header)
+	}
+
+	const recordLen = 3
+	var opts []Opt
+	for {
+		record, err = reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%T.Read(): %v", reader, err)
+		}
+		if len(record) != recordLen {
+			return nil, fmt.Errorf("record length is not equal to %d", recordLen)
+		}
+
+		for i, r := range record {
+			record[i] = strings.TrimSpace(r)
+		}
+		speed, voice, text := record[0], record[1], record[2]
+
+		var opt Opt
+		switch strings.ToLower(speed) {
+		case "normal":
+			opt.Speed = NormalSpeed
+		case "slower":
+			opt.Speed = SlowerSpeed
+		case "slowest":
+			opt.Speed = SlowestSpeed
+		}
+		opt.Voice = Voice(strings.ToLower(voice))
+		opt.Text = text
+		opts = append(opts, opt)
 	}
 	return opts, nil
 }

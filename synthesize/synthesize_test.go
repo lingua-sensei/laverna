@@ -12,7 +12,7 @@ import (
 	"github.com/mrwormhole/errdiff"
 )
 
-func TestRun2(t *testing.T) {
+func TestRun(t *testing.T) {
 	tests := []struct {
 		name      string
 		client    *http.Client
@@ -58,7 +58,7 @@ func TestRun2(t *testing.T) {
 	}
 }
 
-func TestOptsUnmarshalYAML(t *testing.T) {
+func TestUnmarshalYAML(t *testing.T) {
 	tests := []struct {
 		name     string
 		wantOpts []Opt
@@ -104,6 +104,70 @@ func TestOptsUnmarshalYAML(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := UnmarshalYAML(tt.rawYAML())
+			if diff := errdiff.Check(err, tt.wantErr); diff != "" {
+				t.Errorf("UnmarshalYAML(): err diff=\n%s", diff)
+			}
+
+			if diff := cmp.Diff(tt.wantOpts, got); diff != "" {
+				t.Errorf("UnmarshalYAML(): opts diff=\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUnmarshalCSV(t *testing.T) {
+	tests := []struct {
+		name     string
+		wantOpts []Opt
+		rawCSV   func() []byte
+		wantErr  error
+	}{
+		{
+			name: "example YAML",
+			rawCSV: func() []byte {
+				const filename = "../testdata/synthesize-example.csv"
+				raw, err := os.ReadFile(filename)
+				if err != nil {
+					t.Fatalf("os.ReadFile(%s): %v", filename, err)
+				}
+				return raw
+			},
+			wantOpts: []Opt{
+				{
+					Speed: NormalSpeed,
+					Voice: ThaiVoice,
+					Text:  "สวัสดีครับ",
+				},
+				{
+					Speed: SlowerSpeed,
+					Voice: EnglishVoice,
+					Text:  "Hello there",
+				},
+				{
+					Speed: SlowestSpeed,
+					Voice: JapaneseVoice,
+					Text:  "こんにちは~",
+				},
+			},
+		},
+		{
+			name: "empty csv",
+			rawCSV: func() []byte {
+				return nil
+			},
+			wantErr: errors.New("empty csv"),
+		},
+		{
+			name: "weird",
+			rawCSV: func() []byte {
+				return []byte("speed,  AAA    voice,text")
+			},
+			wantErr: errors.New("header record([speed AAA    voice text]) is not the correct header([speed voice text])"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := UnmarshalCSV(tt.rawCSV())
 			if diff := errdiff.Check(err, tt.wantErr); diff != "" {
 				t.Errorf("UnmarshalYAML(): err diff=\n%s", diff)
 			}
