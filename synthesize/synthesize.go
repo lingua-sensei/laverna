@@ -5,27 +5,17 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	"github.com/goccy/go-yaml"
-)
-
-// Speed is the pronunciation speed of the voice
-type Speed int
-
-const (
-	// NormalSpeed is the fastest speed
-	NormalSpeed = iota
-	// SlowerSpeed is the middle speed
-	SlowerSpeed
-	// SlowestSpeed is the slowest speed
-	SlowestSpeed
 )
 
 // Opt consists of parameters for generating audio
@@ -56,17 +46,49 @@ func UnmarshalYAML(raw []byte) ([]Opt, error) {
 
 	opts := make([]Opt, len(in))
 	for i, v := range in {
-		switch strings.ToLower(v.Speed) {
-		case "normal":
-			opts[i].Speed = NormalSpeed
-		case "slower":
-			opts[i].Speed = SlowerSpeed
-		case "slowest":
-
-			opts[i].Speed = SlowestSpeed
-		}
+		opts[i].Speed = NewSpeed(strings.ToLower(v.Speed))
 		opts[i].Voice = Voice(strings.ToLower(v.Voice))
 		opts[i].Text = v.Text
+	}
+	return opts, nil
+}
+
+// ErrEmptyCSV occurs when empty csv is given
+var ErrEmptyCSV = errors.New("empty csv")
+
+// UnmarshalCSV reads raw bytes from CSV and turns into Opts
+func UnmarshalCSV(raw []byte) ([]Opt, error) {
+	if len(raw) == 0 {
+		return nil, ErrEmptyCSV
+	}
+
+	reader := csv.NewReader(bytes.NewReader(raw))
+	reader.TrimLeadingSpace = true
+	record, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("%T.Read(): %v", reader, err)
+	}
+	header := []string{"speed", "voice", "text"}
+	if !slices.Equal(header, record) {
+		return nil, fmt.Errorf("header record(%v) is not the correct header(%v)", record, header)
+	}
+
+	var opts []Opt
+	for {
+		record, err = reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%T.Read(): %w", reader, err)
+		}
+
+		speed, voice, text := record[0], record[1], record[2]
+		var opt Opt
+		opt.Speed = NewSpeed(strings.ToLower(speed))
+		opt.Voice = Voice(strings.ToLower(voice))
+		opt.Text = text
+		opts = append(opts, opt)
 	}
 	return opts, nil
 }

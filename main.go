@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/lingua-sensei/laverna/synthesize"
 )
@@ -27,9 +28,20 @@ func main() {
 		log.Fatalf("[ERR] failed to read filename path: %v", err)
 	}
 
-	opts, err := synthesize.UnmarshalYAML(raw)
-	if err != nil {
-		log.Fatalf("[ERR] failed to unmarshal YAML: %v", err)
+	var opts []synthesize.Opt
+	if strings.HasSuffix(*filenamePath, ".yaml") || strings.HasSuffix(*filenamePath, ".yml") {
+		opts, err = synthesize.UnmarshalYAML(raw)
+		if err != nil {
+			log.Fatalf("[ERR] failed to unmarshal YAML: %v", err)
+		}
+	} else if strings.HasSuffix(*filenamePath, ".csv") {
+		opts, err = synthesize.UnmarshalCSV(raw)
+		if err != nil {
+			log.Fatalf("[ERR] failed to unmarshal CSV: %v", err)
+		}
+	} else {
+		log.Fatalf("[ERR] file format must be yaml/yml or csv")
+		return
 	}
 
 	runner := synthesize.NewBatchRunner(synthesize.WithMaxWorkers(*maxWorkers))

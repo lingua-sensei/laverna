@@ -23,7 +23,16 @@ You can find binaries through GitHub releases.
 
 ### Sample Usage
 
-Let's create example YAML.
+Let's create example CSV
+
+```csv
+speed,voice,text
+normal,th,สวัสดีครับ
+slower,en,Hello there
+slowest,ja,こんにちは~
+```
+
+or you could do YAML
 
 ```yaml
 - speed: normal
@@ -38,6 +47,12 @@ Let's create example YAML.
 ```
 
 Running below command will generate audios in the same directory.
+
+```shell
+  laverna -file example.csv
+```
+
+or
 
 ```shell
   laverna -file example.yaml 
