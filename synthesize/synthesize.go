@@ -73,7 +73,6 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 		return nil, fmt.Errorf("header record(%v) is not the correct header(%v)", record, header)
 	}
 
-	const recordLen = 3
 	var opts []Opt
 	for {
 		record, err = reader.Read()
@@ -81,10 +80,7 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 			break
 		}
 		if err != nil {
-			return nil, fmt.Errorf("%T.Read(): %v", reader, err)
-		}
-		if len(record) != recordLen {
-			return nil, fmt.Errorf("record length is not equal to %d", recordLen)
+			return nil, fmt.Errorf("%T.Read(): %w", reader, err)
 		}
 
 		speed, voice, text := record[0], record[1], record[2]

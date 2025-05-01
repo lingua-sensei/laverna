@@ -2,6 +2,7 @@ package synthesize
 
 import (
 	"context"
+	"encoding/csv"
 	"errors"
 	"net/http"
 	"os"
@@ -98,7 +99,7 @@ func TestUnmarshalYAML(t *testing.T) {
 			rawYAML: func() []byte {
 				return nil
 			},
-			wantErr: errors.New("empty yaml"),
+			wantErr: ErrEmptyYAML,
 		},
 	}
 	for _, tt := range tests {
@@ -155,7 +156,7 @@ func TestUnmarshalCSV(t *testing.T) {
 			rawCSV: func() []byte {
 				return nil
 			},
-			wantErr: errors.New("empty csv"),
+			wantErr: ErrEmptyCSV,
 		},
 		{
 			name: "weird",
@@ -163,6 +164,13 @@ func TestUnmarshalCSV(t *testing.T) {
 				return []byte("speed,  AAA    voice,text")
 			},
 			wantErr: errors.New("header record([speed AAA    voice text]) is not the correct header([speed voice text])"),
+		},
+		{
+			name: "different number of fields",
+			rawCSV: func() []byte {
+				return []byte("speed,voice,text\n slowest,uk")
+			},
+			wantErr: csv.ErrFieldCount,
 		},
 	}
 	for _, tt := range tests {
