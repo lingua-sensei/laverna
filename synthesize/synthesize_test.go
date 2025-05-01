@@ -172,6 +172,13 @@ func TestUnmarshalCSV(t *testing.T) {
 			},
 			wantErr: csv.ErrFieldCount,
 		},
+		{
+			name: "invalid csv",
+			rawCSV: func() []byte {
+				return []byte("speed,\"\"voice\"\",text")
+			},
+			wantErr: errors.New("*csv.Reader.Read(): parse error on line 1, column 8: extraneous or missing \" in quoted-field"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
