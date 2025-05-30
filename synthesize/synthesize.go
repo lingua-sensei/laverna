@@ -86,7 +86,10 @@ func UnmarshalCSV(raw []byte) ([]Opt, error) {
 		speed, voice, text := record[0], record[1], record[2]
 		var opt Opt
 		opt.Speed = NewSpeed(strings.ToLower(speed))
-		opt.Voice = Voice(strings.ToLower(voice))
+		opt.Voice = Voice(voice)
+		if !strings.Contains(voice, "-") {
+			opt.Voice = Voice(strings.ToLower(voice))
+		}
 		opt.Text = text
 		opts = append(opts, opt)
 	}
