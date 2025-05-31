@@ -29,8 +29,7 @@ linters:
     - recvcheck
     - revive
     - sloglint
-    - staticcheck
-    - stylecheck
+    - staticcheck # stylecheck, gosimple, and staticcheck has been merged inside the staticcheck
     - thelper
     - tparallel
     - unconvert
