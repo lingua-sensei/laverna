@@ -1,121 +1,113 @@
-# If this config is confusing, have a look here, it is documented from A-Z https://golangci-lint.run/usage/linters
-linters-settings:
-  revive:
-    max-open-files: 2048 # Maximum number of open files at the same time.
-    ignore-generated-header: false # When set to false, ignores files with "GENERATED" header, similar to golint.
-    severity: warning # Sets the default severity.
-    enable-all-rules: false # Enable all available rules.
-    confidence: 0.8 # This means that linting errors with less than 0.8 confidence will be ignored.
-    rules:
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#context-as-argument
-      - name: context-as-argument
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#defer
-      - name: defer
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unexported-return
-      - name: unexported-return
-        severity: warning
-        disabled: false
-      # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#exported
-      - name: exported
-        severity: warning
-        disabled: false
-        arguments:
-          - "checkPrivateReceivers"
-          - "sayRepetitiveInsteadOfStutters"
-  interfacebloat:
-    max: 5 # The maximum number of methods allowed for an interface.
-  goconst:
-    min-len: 3 # Minimal length of string constant.
-    min-occurrences: 3 # Minimum occurrences of constant string count to trigger issue.
-    ignore-tests: true
-  gci:
-    custom-order: true
-    sections:
-      - standard # Standard section: captures all standard packages.
-      - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(github.com/lingua-sensei/laverna) # Custom section: groups all imports with the specified Prefix.
-    skip-generated: false
-  nolintlint:
-    allow-unused: false # report any unused nolint directives
-    require-explanation: false # don't require an explanation for nolint directives
-    require-specific: true # require nolint directives to be specific about which linter is being skipped
-  godox:
-    # Report any comments starting with keywords
-    keywords:
-      - TODO
-      - BUG
-      - FIXME
-      - OPTIMIZE
-      - HACK
-  usetesting:
-    # Enable/disable `os.CreateTemp("", ...)` `os.MkdirTemp()` `os.Setenv()` `os.TempDir()` detections.
-    os-create-temp: true
-    os-mkdir-temp: true
-    os-setenv: true
-    os-temp-dir: true
-
+version: "2"
+run:
+  tests: true
 linters:
-  disable-all: true
+  default: none
   enable:
-    # common mistakes
-    - govet
-    - staticcheck
-    - gosec
     - bodyclose
-    - ineffassign
-    - errcheck
+    - containedctx
+    - contextcheck
+    - dogsled
     - durationcheck
+    - errcheck
+    - errname
+    - fatcontext
+    - forcetypeassert
+    - gochecknoinits
+    - goconst
+    - godox
+    - gosec
+    - govet
+    - ineffassign
+    - interfacebloat
+    - musttag
     - nilerr
     - nilnil
+    - noctx
     - nolintlint
-    - wrapcheck
-    - sloglint
-    - interfacebloat
-    - gochecknoinits
-    - godox
-    - musttag
-    - recvcheck
-
-    # common styling
-    - gofmt
-    - goimports
-    - gci
-    - goconst
-    - gosimple
-    - dogsled
-    - errname
-    - forcetypeassert
     - predeclared
-    - usetesting
+    - recvcheck
+    - revive
+    - sloglint
+    - staticcheck # stylecheck, gosimple, and staticcheck has been merged inside the staticcheck
     - thelper
     - tparallel
     - unconvert
     - unparam
     - unused
     - usestdlibvars
+    - usetesting
     - whitespace
-    - stylecheck
-    - revive
-
-    # context issues
-    - containedctx
-    - contextcheck
-    - fatcontext
-    - noctx
-
-issues:
-  # Disable golangci-lint defaults https://golangci-lint.run/usage/false-positives/
-  exclude-use-default: false
-
-  exclude-rules:
-    - path: _test\.go$
-      linters:
-        - containedctx
-
-run:
-  tests: true
-  timeout: 30s
+    - wrapcheck
+  settings:
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    godox:
+      keywords:
+        - TODO
+        - BUG
+        - FIXME
+        - OPTIMIZE
+        - HACK
+    interfacebloat:
+      max: 5
+    nolintlint:
+      require-explanation: false
+      require-specific: true
+      allow-unused: false
+    revive:
+      max-open-files: 2048
+      confidence: 0.8
+      severity: warning
+      enable-all-rules: false
+      rules:
+        - name: context-as-argument # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#context-as-argument
+          severity: warning
+          disabled: false
+        - name: defer # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#defer
+          severity: warning
+          disabled: false
+        - name: unexported-return # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#unexported-return
+          severity: warning
+          disabled: false
+        - name: exported # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#exported
+          arguments:
+            - checkPrivateReceivers
+            - sayRepetitiveInsteadOfStutters
+          severity: warning
+          disabled: false
+    usetesting:
+      os-mkdir-temp: true
+      os-setenv: true
+      os-temp-dir: true
+      os-create-temp: true
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - containedctx
+          - goconst
+        path: (.+)_test\.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/lingua-sensei/laverna)
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
