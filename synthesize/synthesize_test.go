@@ -1,7 +1,6 @@
 package synthesize
 
 import (
-	"context"
 	"encoding/csv"
 	"errors"
 	"net/http"
@@ -47,8 +46,7 @@ func TestRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
-			audio, err := Run(ctx, tt.client, tt.opt)
+			audio, err := Run(t.Context(), tt.client, tt.opt)
 			if diff := errdiff.Check(err, tt.wantErr); diff != "" {
 				t.Errorf("Run(%v): err diff=\n%s", tt.opt, diff)
 			}

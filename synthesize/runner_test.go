@@ -37,7 +37,7 @@ func TestBatchRunner(t *testing.T) {
 				filepath.Join(temp, "test1.mp3"),
 				filepath.Join(temp, "test2.mp3"),
 			},
-			ctx: context.Background(),
+			ctx: t.Context(),
 		},
 		{
 			name: "context cancelled",
@@ -47,7 +47,7 @@ func TestBatchRunner(t *testing.T) {
 			saveFn:  func(string, []byte) error { return nil },
 			wantErr: context.Canceled,
 			ctx: func() context.Context {
-				ctx, cancel := context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(t.Context())
 				cancel() // Cancel immediately
 				return ctx
 			}(),
@@ -61,7 +61,7 @@ func TestBatchRunner(t *testing.T) {
 				return saveErr
 			},
 			wantErr: saveErr,
-			ctx:     context.Background(),
+			ctx:     t.Context(),
 		},
 	}
 
