@@ -89,6 +89,11 @@ linters:
           - containedctx
           - goconst
         path: (.+)_test\.go
+
+      - linters:
+          - revive
+        path: synthesize/voice.go
+        text: "exported const .* should have comment"
     paths:
       - third_party$
       - builtin$

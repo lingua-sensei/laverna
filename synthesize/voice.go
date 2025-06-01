@@ -5,8 +5,6 @@ package synthesize
 // es-MX, es-ES or en-US, en-UK, en-AU voices are converted to regions and no longer available on web version, they are using different domains rather than language codes.
 type Voice string
 
-//nolint:revive
-//nolint:nolintlint
 const (
 	AfrikaansVoice           Voice = "af"
 	AlbanianVoice            Voice = "sq"
